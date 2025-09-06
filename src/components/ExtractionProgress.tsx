@@ -193,9 +193,9 @@ const ExtractionProgress: React.FC<ExtractionProgressProps> = ({
 
   const getStepColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'text-green-600 bg-green-100';
-      case 'current': return 'text-blue-600 bg-blue-100';
-      default: return 'text-gray-400 bg-gray-100';
+      case 'completed': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/20';
+      case 'current': return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20';
+      default: return 'text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-gray-800';
     }
   };
 

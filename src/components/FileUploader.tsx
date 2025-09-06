@@ -133,9 +133,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   };
 
   const getFileIcon = (type: string) => {
-    if (type === 'application/pdf') return <FileText className="h-8 w-8 text-red-500" />;
-    if (type.startsWith('image/')) return <Image className="h-8 w-8 text-blue-500" />;
-    return <FileText className="h-8 w-8 text-gray-500" />;
+    if (type === 'application/pdf') return <FileText className="h-8 w-8 text-red-500 dark:text-red-400" />;
+    if (type.startsWith('image/')) return <Image className="h-8 w-8 text-blue-500 dark:text-blue-400" />;
+    return <FileText className="h-8 w-8 text-gray-500 dark:text-gray-400" />;
   };
 
   return (
@@ -144,22 +144,22 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       <Card
         className={`border-2 border-dashed transition-colors ${
           isDragOver
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
+            ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
+            : 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <Upload className="h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <Upload className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             Upload Invoice Files
           </h3>
-          <p className="text-sm text-gray-500 mb-4 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">
             Drag and drop your invoice files here, or click to browse
           </p>
-          <p className="text-xs text-gray-400 mb-4">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
             Supports PDF, JPG, PNG files up to {maxSizeInMB}MB each
           </p>
           <Button onClick={() => document.getElementById('file-input')?.click()}>

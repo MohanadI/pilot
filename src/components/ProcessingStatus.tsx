@@ -27,7 +27,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               stroke="currentColor"
               strokeWidth="8"
               fill="none"
-              className="text-slate-200"
+              className="text-slate-200 dark:text-slate-700"
             />
             <circle
               cx="40"
@@ -37,16 +37,16 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               strokeWidth="8"
               fill="none"
               strokeDasharray={strokeDasharray}
-              className="text-blue-500"
+              className="text-blue-500 dark:text-blue-400"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-2xl font-bold text-blue-600">
+            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {accuracyRate}%
             </span>
           </div>
         </div>
-        <div className="text-sm text-blue-600 font-medium mb-2">
+        <div className="text-sm text-blue-600 dark:text-blue-400 font-medium mb-2">
           Accuracy Rate
         </div>
         <div className="text-xs text-muted-foreground">

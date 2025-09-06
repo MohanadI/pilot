@@ -26,7 +26,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
           className="w-full justify-start h-auto p-3"
           onClick={onUploadInvoice}
         >
-          <Upload className="h-4 w-4 mr-3 text-blue-600" />
+          <Upload className="h-4 w-4 mr-3 text-blue-600 dark:text-blue-400" />
           <span>Upload Invoice</span>
         </Button>
         <Button
@@ -34,7 +34,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
           className="w-full justify-start h-auto p-3"
           onClick={onSetupEmailRules}
         >
-          <Mail className="h-4 w-4 mr-3 text-blue-600" />
+          <Mail className="h-4 w-4 mr-3 text-blue-600 dark:text-blue-400" />
           <span>Setup Email Rules</span>
         </Button>
         <Button
@@ -42,7 +42,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
           className="w-full justify-start h-auto p-3"
           onClick={onExportData}
         >
-          <Download className="h-4 w-4 mr-3 text-blue-600" />
+          <Download className="h-4 w-4 mr-3 text-blue-600 dark:text-blue-400" />
           <span>Export Data</span>
         </Button>
         <Button
@@ -50,7 +50,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
           className="w-full justify-start h-auto p-3"
           onClick={onReminderSettings}
         >
-          <Bell className="h-4 w-4 mr-3 text-blue-600" />
+          <Bell className="h-4 w-4 mr-3 text-blue-600 dark:text-blue-400" />
           <span>Reminder Settings</span>
         </Button>
       </CardContent>
