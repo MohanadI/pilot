@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Header, AlertBanner, StatsGrid, InvoiceList, Sidebar, UploadInvoiceModal, EmailSetupModal } from "@/components";
+import { Header, AlertBanner, StatsGrid, InvoiceList, Sidebar, UploadInvoiceModal, EmailSetupModal, ExportDataModal } from "@/components";
 import type { Invoice } from "@/types/invoice";
 import type { EmailSetupState } from "@/types/email";
 
@@ -8,6 +8,7 @@ const Dashboard = () => {
   const [showAlert, setShowAlert] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isEmailSetupOpen, setIsEmailSetupOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Simulate real-time updates
   useEffect(() => {
@@ -97,7 +98,7 @@ const Dashboard = () => {
   };
 
   const handleExportData = () => {
-    console.log("Export data");
+    setIsExportModalOpen(true);
   };
 
   const handleReminderSettings = () => {
@@ -113,6 +114,11 @@ const Dashboard = () => {
   const handleEmailSetupSaved = (setup: EmailSetupState) => {
     // In a real app, this would save the email configuration
     console.log("Email setup saved:", setup);
+  };
+
+  const handleExportDataSaved = (exportData: any) => {
+    // In a real app, this would handle the export data
+    console.log("Export data saved:", exportData);
   };
 
   return (
@@ -169,6 +175,13 @@ const Dashboard = () => {
         isOpen={isEmailSetupOpen}
         onClose={() => setIsEmailSetupOpen(false)}
         onSave={handleEmailSetupSaved}
+      />
+
+      {/* Export Data Modal */}
+      <ExportDataModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleExportDataSaved}
       />
     </div>
   );
