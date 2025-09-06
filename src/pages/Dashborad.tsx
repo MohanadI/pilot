@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Header, AlertBanner, StatsGrid, InvoiceList, Sidebar } from "@/components";
+import { Header, AlertBanner, StatsGrid, InvoiceList, Sidebar, UploadInvoiceModal } from "@/components";
 import type { Invoice } from "@/types/invoice";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [showAlert, setShowAlert] = useState(true);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   // Simulate real-time updates
   useEffect(() => {
@@ -86,7 +87,7 @@ const Dashboard = () => {
   };
 
   const handleUploadInvoice = () => {
-    console.log("Upload invoice");
+    setIsUploadModalOpen(true);
   };
 
   const handleSetupEmailRules = () => {
@@ -99,6 +100,12 @@ const Dashboard = () => {
 
   const handleReminderSettings = () => {
     console.log("Reminder settings");
+  };
+
+  const handleInvoiceSaved = (newInvoice: Invoice) => {
+    // In a real app, this would update the invoices state
+    console.log("New invoice saved:", newInvoice);
+    // You could add the new invoice to the invoices array here
   };
 
   return (
@@ -142,6 +149,13 @@ const Dashboard = () => {
           />
         </div>
       </div>
+
+      {/* Upload Invoice Modal */}
+      <UploadInvoiceModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onInvoiceSaved={handleInvoiceSaved}
+      />
     </div>
   );
 };

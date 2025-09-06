@@ -1,4 +1,3 @@
-import React from "react";
 import ProcessingStatus from "./ProcessingStatus";
 import StorageStatus from "./StorageStatus";
 import QuickActions from "./QuickActions";

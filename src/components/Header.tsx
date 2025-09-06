@@ -1,4 +1,3 @@
-import React from "react";
 import { Receipt, Wifi } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import {

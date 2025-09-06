@@ -9,12 +9,21 @@ export { default as ProcessingStatus } from "./ProcessingStatus";
 export { default as StorageStatus } from "./StorageStatus";
 export { default as QuickActions } from "./QuickActions";
 
+// Upload Components
+export { default as UploadInvoiceModal } from "./UploadInvoiceModal";
+export { default as FileUploader } from "./FileUploader";
+export { default as ExtractionProgress } from "./ExtractionProgress";
+export { default as FieldReview } from "./FieldReview";
+
 // UI Components (re-export from ui folder)
 export * from "./ui/alert";
 export * from "./ui/badge";
 export * from "./ui/button";
 export * from "./ui/card";
+export * from "./ui/dialog";
 export * from "./ui/dropdown-menu";
+export * from "./ui/input";
+export * from "./ui/label";
 export * from "./ui/progress";
 export * from "./ui/tabs";
 export * from "./ui/tooltip";
