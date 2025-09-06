@@ -30,6 +30,13 @@ export { default as ExportTemplates } from "./ExportTemplates";
 export { default as ScheduledExports } from "./ScheduledExports";
 export { default as ExportPreview } from "./ExportPreview";
 
+// Reminder Components
+export { default as ReminderSettingsModal } from "./ReminderSettingsModal";
+export { default as TimingRules } from "./TimingRules";
+export { default as CommunicationChannels } from "./CommunicationChannels";
+export { default as MessageTemplates } from "./MessageTemplates";
+export { default as EscalationWorkflow } from "./EscalationWorkflow";
+
 // UI Components (re-export from ui folder)
 export * from "./ui/alert";
 export * from "./ui/badge";
