@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Header, AlertBanner, StatsGrid, InvoiceList, Sidebar, UploadInvoiceModal } from "@/components";
+import { Header, AlertBanner, StatsGrid, InvoiceList, Sidebar, UploadInvoiceModal, EmailSetupModal } from "@/components";
 import type { Invoice } from "@/types/invoice";
+import type { EmailSetupState } from "@/types/email";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [showAlert, setShowAlert] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isEmailSetupOpen, setIsEmailSetupOpen] = useState(false);
 
   // Simulate real-time updates
   useEffect(() => {
@@ -91,7 +93,7 @@ const Dashboard = () => {
   };
 
   const handleSetupEmailRules = () => {
-    console.log("Setup email rules");
+    setIsEmailSetupOpen(true);
   };
 
   const handleExportData = () => {
@@ -106,6 +108,11 @@ const Dashboard = () => {
     // In a real app, this would update the invoices state
     console.log("New invoice saved:", newInvoice);
     // You could add the new invoice to the invoices array here
+  };
+
+  const handleEmailSetupSaved = (setup: EmailSetupState) => {
+    // In a real app, this would save the email configuration
+    console.log("Email setup saved:", setup);
   };
 
   return (
@@ -155,6 +162,13 @@ const Dashboard = () => {
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onInvoiceSaved={handleInvoiceSaved}
+      />
+
+      {/* Email Setup Modal */}
+      <EmailSetupModal
+        isOpen={isEmailSetupOpen}
+        onClose={() => setIsEmailSetupOpen(false)}
+        onSave={handleEmailSetupSaved}
       />
     </div>
   );

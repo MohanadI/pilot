@@ -15,6 +15,14 @@ export { default as FileUploader } from "./FileUploader";
 export { default as ExtractionProgress } from "./ExtractionProgress";
 export { default as FieldReview } from "./FieldReview";
 
+// Email Setup Components
+export { default as EmailSetupModal } from "./EmailSetupModal";
+export { default as EmailAccountConnection } from "./EmailAccountConnection";
+export { default as SupplierWhitelist } from "./SupplierWhitelist";
+export { default as FolderRules } from "./FolderRules";
+export { default as NotificationSettings } from "./NotificationSettings";
+export { default as EmailTesting } from "./EmailTesting";
+
 // UI Components (re-export from ui folder)
 export * from "./ui/alert";
 export * from "./ui/badge";
