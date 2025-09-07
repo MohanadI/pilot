@@ -1,0 +1,114 @@
+### Health Check
+GET http://localhost:3001/health
+Content-Type: application/json
+
+###
+
+### Test File Upload - Basic Info
+POST http://localhost:3001/api/upload
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="source"
+
+upload
+------WebKitFormBoundary
+Content-Disposition: form-data; name="invoice"; filename="test-invoice.pdf"
+Content-Type: application/pdf
+
+Sample PDF content for testing
+------WebKitFormBoundary--
+
+###
+
+### Get All Invoices
+GET http://localhost:3001/api/invoices
+Content-Type: application/json
+
+###
+
+### Get Invoices with Filters
+GET http://localhost:3001/api/invoices?status=uploaded&limit=5&offset=0
+Content-Type: application/json
+
+###
+
+### Get Invoice Statistics
+GET http://localhost:3001/api/invoices/stats/overview
+Content-Type: application/json
+
+###
+
+### Create WhatsApp Group
+POST http://localhost:3001/api/whatsapp/groups
+Content-Type: application/json
+
+{
+  "groupId": "test-group-123",
+  "groupName": "Test Invoice Group",
+  "groupDescription": "Group for testing invoice processing",
+  "triggerKeywords": ["Invoice", "invoice", "bill", "receipt"],
+  "connectedBy": "test-user"
+}
+
+###
+
+### Get WhatsApp Groups
+GET http://localhost:3001/api/whatsapp/groups
+Content-Type: application/json
+
+###
+
+### Test WhatsApp Group Keywords
+POST http://localhost:3001/api/whatsapp/groups/test-group-123/test
+Content-Type: application/json
+
+{
+  "message": "Here is the invoice for this month"
+}
+
+###
+
+### Get Specific Invoice Status (replace with actual invoice ID after upload)
+GET http://localhost:3001/api/upload/status/INVOICE_ID_HERE
+Content-Type: application/json
+
+###
+
+### Webhook Test - n8n Callback (simulated)
+POST http://localhost:3001/api/webhooks/n8n-callback
+Content-Type: application/json
+
+{
+  "invoiceId": "INVOICE_ID_HERE",
+  "status": "processed",
+  "executionId": "test-execution-123",
+  "extractedData": {
+    "invoiceNumber": "INV-2024-001",
+    "vendor": "Test Company",
+    "vendorAddress": "123 Test Street, Test City",
+    "date": "2024-01-15",
+    "amount": 1250.00,
+    "currency": "USD",
+    "vatAmount": 125.00,
+    "vatRate": 0.10,
+    "items": [
+      {
+        "description": "Professional Services",
+        "quantity": 10,
+        "unitPrice": 125.00,
+        "total": 1250.00
+      }
+    ]
+  },
+  "confidenceScores": {
+    "overall": 0.95,
+    "fields": {
+      "invoiceNumber": 0.98,
+      "vendor": 0.96,
+      "date": 0.94,
+      "amount": 0.99
+    }
+  },
+  "processingTime": 1500
+}

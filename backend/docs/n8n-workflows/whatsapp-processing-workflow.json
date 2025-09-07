@@ -1,0 +1,384 @@
+{
+  "meta": {
+    "instanceId": "pilot-whatsapp-processing"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-processing",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "whatsapp-webhook",
+      "name": "WhatsApp Message Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "whatsapp-processing"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.type}}",
+              "operation": "equal",
+              "value2": "whatsapp_message"
+            }
+          ]
+        }
+      },
+      "id": "message-type-check",
+      "name": "Check Message Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.attachments && $json.attachments.length > 0}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "attachment-check",
+      "name": "Has Attachments",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process WhatsApp attachments\nconst attachments = $input.first().json.attachments;\nconst groupId = $input.first().json.groupId;\nconst messageId = $input.first().json.messageId;\nconst sender = $input.first().json.sender;\n\nconst processedAttachments = [];\n\nfor (const attachment of attachments) {\n  // Filter for supported file types\n  const supportedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];\n  \n  if (supportedTypes.includes(attachment.mimeType)) {\n    // Download attachment from WhatsApp\n    // In a real implementation, you would:\n    // 1. Use WhatsApp Business API to download the media\n    // 2. Convert to base64 or save to storage\n    // 3. Extract text/OCR as needed\n    \n    // Simulate downloaded attachment\n    const processedAttachment = {\n      id: attachment.id,\n      filename: attachment.filename || `whatsapp_${messageId}_${attachment.id}`,\n      mimeType: attachment.mimeType,\n      fileType: attachment.mimeType.includes('pdf') ? 'pdf' : \n                attachment.mimeType.includes('image') ? attachment.mimeType.split('/')[1] : 'unknown',\n      // In real implementation, this would be the actual file data\n      fileData: 'base64_encoded_file_data_here',\n      extractedText: '',\n      source: 'whatsapp',\n      groupId: groupId,\n      messageId: messageId,\n      sender: sender\n    };\n    \n    // Simulate text extraction based on file type\n    if (attachment.mimeType === 'application/pdf') {\n      processedAttachment.extractedText = `\n        INVOICE\n        Invoice Number: WA-INV-2024-${Math.floor(Math.random() * 1000)}\n        Date: ${new Date().toISOString().split('T')[0]}\n        Due Date: ${new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0]}\n        \n        From WhatsApp Group: ${groupId}\n        Sender: ${sender}\n        \n        Professional Services: $500.00\n        VAT (10%): $50.00\n        Total: $550.00\n        \n        IBAN: GB29 NWBK 6016 1331 9268 19\n      `;\n    } else {\n      // OCR processing for images\n      processedAttachment.extractedText = `\n        INVOICE\n        Invoice Number: WA-IMG-2024-${Math.floor(Math.random() * 1000)}\n        Date: ${new Date().toISOString().split('T')[0]}\n        \n        From WhatsApp: ${sender}\n        Services Rendered: $750.00\n        VAT: $75.00\n        Total: $825.00\n      `;\n    }\n    \n    processedAttachments.push(processedAttachment);\n  }\n}\n\nreturn {\n  groupId: groupId,\n  messageId: messageId,\n  sender: sender,\n  timestamp: $input.first().json.timestamp,\n  processedAttachments: processedAttachments,\n  attachmentCount: processedAttachments.length\n};"
+      },
+      "id": "attachment-processor",
+      "name": "Process Attachments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "processedAttachments",
+        "options": {}
+      },
+      "id": "split-attachments",
+      "name": "Split Attachments",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "create",
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert invoice data extraction system. Extract structured data from invoice text and return it as valid JSON. This invoice came from a WhatsApp message.\n\nReturn the data in this exact format:\n{\n  \"invoiceNumber\": \"string\",\n  \"vendor\": \"string\",\n  \"vendorAddress\": \"string\",\n  \"date\": \"YYYY-MM-DD\",\n  \"dueDate\": \"YYYY-MM-DD\",\n  \"amount\": number,\n  \"currency\": \"string\",\n  \"vatAmount\": number,\n  \"vatRate\": number,\n  \"vatId\": \"string\",\n  \"items\": [\n    {\n      \"description\": \"string\",\n      \"quantity\": number,\n      \"unitPrice\": number,\n      \"total\": number\n    }\n  ],\n  \"bankDetails\": {\n    \"iban\": \"string\",\n    \"bic\": \"string\"\n  },\n  \"confidenceScores\": {\n    \"overall\": 0.0-1.0,\n    \"fields\": {\n      \"invoiceNumber\": 0.0-1.0,\n      \"vendor\": 0.0-1.0,\n      \"date\": 0.0-1.0,\n      \"amount\": 0.0-1.0\n    }\n  },\n  \"whatsappMetadata\": {\n    \"groupId\": \"string\",\n    \"messageId\": \"string\",\n    \"sender\": \"string\"\n  }\n}\n\nOnly return the JSON, no additional text."
+            },
+            {
+              "role": "user",
+              "content": "=Extract data from this WhatsApp invoice attachment:\n\nGroup: {{$json.groupId}}\nSender: {{$json.sender}}\nMessage ID: {{$json.messageId}}\n\nInvoice Text:\n{{$json.extractedText}}"
+            }
+          ]
+        },
+        "temperature": 0.1
+      },
+      "id": "whatsapp-ai-extraction",
+      "name": "WhatsApp AI Extraction",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1340, 200],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-credentials",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Create invoice record in backend\nconst extractedData = JSON.parse($input.first().json.choices[0].message.content);\nconst attachment = $input.first().json;\n\n// Prepare invoice data for backend\nconst invoiceData = {\n  originalFilename: attachment.filename,\n  fileType: attachment.fileType,\n  fileSize: 0, // WhatsApp doesn't provide exact size\n  source: 'whatsapp',\n  whatsappGroupId: attachment.groupId,\n  whatsappMessageId: attachment.messageId,\n  whatsappSender: attachment.sender,\n  status: 'processed',\n  extractedData: extractedData,\n  confidenceScores: extractedData.confidenceScores,\n  processingStartTime: new Date().toISOString(),\n  processingEndTime: new Date().toISOString()\n};\n\nreturn {\n  invoiceData: invoiceData,\n  groupId: attachment.groupId,\n  messageId: attachment.messageId,\n  filename: attachment.filename\n};"
+      },
+      "id": "prepare-invoice-data",
+      "name": "Prepare Invoice Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.callbackUrl || 'http://localhost:3001/api/invoices'}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "invoiceData",
+              "value": "={{$json.invoiceData}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-invoice",
+      "name": "Create Invoice Record",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "id": "collect-results",
+      "name": "Collect Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate results from all processed attachments\nconst results = $input.all();\n\nconst processedInvoices = [];\nconst errors = [];\n\nresults.forEach((result, index) => {\n  if (result.json.invoiceData) {\n    processedInvoices.push({\n      invoiceId: result.json.invoiceId || `temp_${index}`,\n      filename: result.json.filename,\n      status: 'processed',\n      extractedData: result.json.invoiceData.extractedData,\n      confidenceScores: result.json.invoiceData.confidenceScores\n    });\n  } else if (result.json.error) {\n    errors.push(result.json.error);\n  }\n});\n\nconst overallStatus = errors.length === 0 && processedInvoices.length > 0 ? 'processed' : 'failed';\n\nreturn {\n  groupId: results[0]?.json.groupId,\n  messageId: results[0]?.json.messageId,\n  status: overallStatus,\n  processedCount: processedInvoices.length,\n  errorCount: errors.length,\n  invoices: processedInvoices,\n  errors: errors\n};"
+      },
+      "id": "aggregate-results",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.callbackUrl || 'http://localhost:3001/api/webhooks/whatsapp-callback'}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "groupId",
+              "value": "={{$json.groupId}}"
+            },
+            {
+              "name": "messageId",
+              "value": "={{$json.messageId}}"
+            },
+            {
+              "name": "status",
+              "value": "={{$json.status}}"
+            },
+            {
+              "name": "invoices",
+              "value": "={{$json.invoices}}"
+            },
+            {
+              "name": "errors",
+              "value": "={{$json.errors}}"
+            },
+            {
+              "name": "processedCount",
+              "value": "={{$json.processedCount}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "whatsapp-callback",
+      "name": "WhatsApp Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2440, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Handle messages without attachments\nconst message = $input.first().json.message;\nconst groupId = $input.first().json.groupId;\nconst messageId = $input.first().json.messageId;\nconst sender = $input.first().json.sender;\n\n// Log the message for potential future processing\nreturn {\n  groupId: groupId,\n  messageId: messageId,\n  sender: sender,\n  message: message,\n  status: 'no_attachments',\n  action: 'logged'\n};"
+      },
+      "id": "no-attachment-handler",
+      "name": "Handle No Attachments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"workflowId\": \"{{$workflow.id}}\",\n  \"executionId\": \"{{$execution.id}}\",\n  \"status\": \"started\",\n  \"message\": \"WhatsApp message processing started\",\n  \"groupId\": \"{{$json.groupId}}\",\n  \"messageId\": \"{{$json.messageId}}\"\n}",
+        "options": {}
+      },
+      "id": "whatsapp-response",
+      "name": "WhatsApp Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 500]
+    }
+  ],
+  "connections": {
+    "WhatsApp Message Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Message Type",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "WhatsApp Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Message Type": {
+      "main": [
+        [
+          {
+            "node": "Has Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Attachments": {
+      "main": [
+        [
+          {
+            "node": "Process Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle No Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Attachments": {
+      "main": [
+        [
+          {
+            "node": "Split Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Attachments": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp AI Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp AI Extraction": {
+      "main": [
+        [
+          {
+            "node": "Prepare Invoice Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Invoice Data": {
+      "main": [
+        [
+          {
+            "node": "Create Invoice Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Invoice Record": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle No Attachments": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Collect Results": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2024-01-15T10:00:00.000Z",
+  "id": "2",
+  "name": "WhatsApp Processing Workflow",
+  "active": true,
+  "tags": ["whatsapp", "processing", "invoice", "automation"],
+  "settings": {
+    "timezone": "UTC"
+  },
+  "staticData": {}
+}
