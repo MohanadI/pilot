@@ -1,0 +1,274 @@
+{
+  "meta": {
+    "instanceId": "pilot-invoice-processing-anthropic"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoice-processing",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Invoice Upload Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "invoice-processing"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.fileType}}",
+              "operation": "equal",
+              "value2": "pdf"
+            }
+          ]
+        }
+      },
+      "id": "file-type-check",
+      "name": "Check File Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "id": "merge-paths",
+      "name": "Merge Processing Paths", 
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract text from PDF\nconst pdfData = $input.first().json.fileData;\nconst filename = $input.first().json.filename;\n\n// Decode base64 PDF data\nconst buffer = Buffer.from(pdfData, 'base64');\n\n// For this example, we'll simulate PDF text extraction\n// In real implementation, you would use a PDF parsing library\n\nconst extractedText = `\n  INVOICE\n  Invoice Number: INV-2024-001\n  Date: 2024-01-15\n  Due Date: 2024-02-15\n  \n  Bill To:\n  ABC Company\n  123 Business Street\n  Business City, BC 12345\n  \n  From:\n  XYZ Supplier\n  456 Supplier Avenue\n  Supplier City, SC 67890\n  VAT ID: VAT123456789\n  \n  Description                 Qty    Rate      Total\n  Professional Services       10     $100.00   $1,000.00\n  Consulting                  5      $150.00   $750.00\n  \n  Subtotal:                              $1,750.00\n  VAT (10%):                             $175.00\n  Total:                                 $1,925.00\n  \n  Payment Details:\n  IBAN: GB29 NWBK 6016 1331 9268 19\n  BIC: NWBKGB2L\n`;\n\nreturn {\n  invoiceId: $input.first().json.invoiceId,\n  filename: filename,\n  fileType: 'pdf',\n  extractedText: extractedText,\n  source: $input.first().json.source\n};"
+      },
+      "id": "pdf-text-extraction", 
+      "name": "PDF Text Extraction",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// OCR processing for images\nconst imageData = $input.first().json.fileData;\nconst filename = $input.first().json.filename;\n\n// Simulate OCR processing\nconst extractedText = `\n  INVOICE\n  Invoice Number: INV-2024-002\n  Date: 2024-01-16\n  Due Date: 2024-02-16\n  \n  Bill To:\n  DEF Corporation\n  789 Client Road\n  Client City, CC 98765\n  \n  From:\n  GHI Services\n  321 Service Lane\n  Service City, SV 54321\n  VAT ID: VAT987654321\n  \n  Description                 Qty    Rate      Total\n  Design Services             8      $125.00   $1,000.00\n  Development                12     $200.00   $2,400.00\n  \n  Subtotal:                              $3,400.00\n  VAT (10%):                             $340.00\n  Total:                                 $3,740.00\n  \n  Payment Details:\n  IBAN: US64 SVBK US6S 3300 0000 0000 0000 0123\n  BIC: SVBKUS6S\n`;\n\nreturn {\n  invoiceId: $input.first().json.invoiceId,\n  filename: filename,\n  fileType: $input.first().json.fileType,\n  extractedText: extractedText,\n  source: $input.first().json.source\n};"
+      },
+      "id": "ocr-processing",
+      "name": "OCR Processing",
+      "type": "n8n-nodes-base.code", 
+      "typeVersion": 2,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "create",
+        "model": "claude-3-5-sonnet-20241022",
+        "maxTokens": 2000,
+        "messages": {
+          "values": [
+            {
+              "role": "user",
+              "content": "You are an expert invoice data extraction system. Extract structured data from this invoice text and return ONLY valid JSON.\n\nReturn the data in this EXACT format:\n{\n  \"invoiceNumber\": \"string\",\n  \"vendor\": \"string\", \n  \"vendorAddress\": \"string\",\n  \"date\": \"YYYY-MM-DD\",\n  \"dueDate\": \"YYYY-MM-DD\",\n  \"amount\": number,\n  \"currency\": \"string\",\n  \"vatAmount\": number,\n  \"vatRate\": number,\n  \"vatId\": \"string\",\n  \"items\": [\n    {\n      \"description\": \"string\",\n      \"quantity\": number,\n      \"unitPrice\": number,\n      \"total\": number\n    }\n  ],\n  \"bankDetails\": {\n    \"iban\": \"string\",\n    \"bic\": \"string\"\n  },\n  \"confidenceScores\": {\n    \"overall\": 0.95,\n    \"fields\": {\n      \"invoiceNumber\": 0.98,\n      \"vendor\": 0.96,\n      \"date\": 0.94,\n      \"amount\": 0.99\n    }\n  }\n}\n\nInvoice text to extract:\n{{$json.extractedText}}"
+            }
+          ]
+        },
+        "temperature": 0.1
+      },
+      "id": "anthropic-extraction",
+      "name": "Anthropic Claude Extraction", 
+      "type": "n8n-nodes-base.anthropic",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse and validate the Claude response\nconst claudeResponse = $input.first().json.content[0].text;\nconst invoiceData = $input.first().json;\n\ntry {\n  const extractedData = JSON.parse(claudeResponse);\n  \n  // Validation rules\n  const validationErrors = [];\n  \n  // Check required fields\n  if (!extractedData.invoiceNumber) {\n    validationErrors.push('Invoice number is missing');\n  }\n  \n  if (!extractedData.vendor) {\n    validationErrors.push('Vendor information is missing');\n  }\n  \n  if (!extractedData.amount || extractedData.amount <= 0) {\n    validationErrors.push('Invalid amount');\n  }\n  \n  // Validate IBAN format (basic check)\n  if (extractedData.bankDetails?.iban) {\n    const ibanRegex = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}$/;\n    if (!ibanRegex.test(extractedData.bankDetails.iban.replace(/\\s/g, ''))) {\n      validationErrors.push('Invalid IBAN format');\n    }\n  }\n  \n  // Validate VAT ID format (basic check)\n  if (extractedData.vatId) {\n    const vatRegex = /^[A-Z]{2}[A-Z0-9]{2,12}$/;\n    if (!vatRegex.test(extractedData.vatId)) {\n      validationErrors.push('Invalid VAT ID format');\n    }\n  }\n  \n  // Check confidence scores\n  const overallConfidence = extractedData.confidenceScores?.overall || 0;\n  const hasLowConfidence = overallConfidence < 0.7;\n  \n  if (hasLowConfidence) {\n    validationErrors.push('Low confidence in data extraction');\n  }\n  \n  const status = validationErrors.length === 0 ? 'processed' : 'failed';\n  \n  return {\n    invoiceId: invoiceData.invoiceId,\n    status: status,\n    extractedData: extractedData,\n    confidenceScores: extractedData.confidenceScores,\n    validationErrors: validationErrors,\n    processingTime: Date.now() - new Date(invoiceData.timestamp).getTime()\n  };\n  \n} catch (error) {\n  return {\n    invoiceId: invoiceData.invoiceId,\n    status: 'failed',\n    errors: [`Failed to parse Claude response: ${error.message}`],\n    processingTime: Date.now() - new Date(invoiceData.timestamp).getTime()\n  };\n}"
+      },
+      "id": "validation-enrichment",
+      "name": "Validation & Enrichment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.callbackUrl || 'http://localhost:3001/api/webhooks/n8n-callback'}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "invoiceId",
+              "value": "={{$json.invoiceId}}"
+            },
+            {
+              "name": "status", 
+              "value": "={{$json.status}}"
+            },
+            {
+              "name": "executionId",
+              "value": "={{$workflow.id}}_{{$execution.id}}"
+            },
+            {
+              "name": "extractedData",
+              "value": "={{$json.extractedData}}"
+            },
+            {
+              "name": "confidenceScores",
+              "value": "={{$json.confidenceScores}}"
+            },
+            {
+              "name": "errors",
+              "value": "={{$json.errors || $json.validationErrors}}"
+            },
+            {
+              "name": "processingTime",
+              "value": "={{$json.processingTime}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "callback-webhook",
+      "name": "Send Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"workflowId\": \"{{$workflow.id}}\",\n  \"executionId\": \"{{$execution.id}}\",\n  \"status\": \"started\",\n  \"message\": \"Invoice processing with Claude started successfully\"\n}",
+        "options": {}
+      },
+      "id": "response-webhook",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook", 
+      "typeVersion": 1,
+      "position": [460, 500]
+    }
+  ],
+  "connections": {
+    "Invoice Upload Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check File Type",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check File Type": {
+      "main": [
+        [
+          {
+            "node": "PDF Text Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OCR Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF Text Extraction": {
+      "main": [
+        [
+          {
+            "node": "Merge Processing Paths",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OCR Processing": {
+      "main": [
+        [
+          {
+            "node": "Merge Processing Paths",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Processing Paths": {
+      "main": [
+        [
+          {
+            "node": "Anthropic Claude Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Claude Extraction": {
+      "main": [
+        [
+          {
+            "node": "Validation & Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation & Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Send Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2024-01-15T10:00:00.000Z",
+  "id": "1",
+  "name": "Invoice Processing with Anthropic Claude",
+  "active": true,
+  "tags": ["invoice", "processing", "ocr", "ai", "anthropic"],
+  "settings": {
+    "timezone": "UTC"
+  },
+  "staticData": {}
+}
